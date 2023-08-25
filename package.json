@@ -1,0 +1,22 @@
+{
+  "name": "nofi",
+  "version": "1.0.0",
+  "description": "TUI app launcher with modal leader keys",
+  "main": "main.js",
+  "scripts": {
+    "test": "tap *.tap.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/focusaurus/nofi.git"
+  },
+  "author": "Peter Lyons <pete@peterlyons.com> (https://peterlyons.com/)",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/focusaurus/nofi/issues"
+  },
+  "homepage": "https://github.com/focusaurus/nofi#readme",
+  "dependencies": {
+    "keypress": "0.2.1"
+  }
+}
