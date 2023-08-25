@@ -11,30 +11,41 @@ process.stdin.resume();
 
 process.stdin.setEncoding("utf8");
 
-function printMenu(menu) {
-  Object.entries(menu).forEach(([key, action]) => {
+function printMenu(stack) {
+  console.clear();
+  stack.forEach((menu) => {
+    process.stdout.write(`${menu.label} >`);
+  });
+  console.log();
+  Object.entries(stack[stack.length - 1].menu).forEach(([key, action]) => {
     console.log(`${key}: ${action.label}`);
   });
 }
 
 let configPath = process.argv[2];
-if (!configPath.startsWith("/")) {
-  configPath = path.join(process.cwd(), configPath);
-}
-// console.log(configPath);
+// if (!configPath.startsWith("/")) {
+//   configPath = path.join(process.cwd(), configPath);
+// }
 
-const menu = require(configPath);
+const top = { label: "top", menu: require(configPath) };
 
-printMenu(menu);
-let menuStack = [menu];
+let menuStack = [top];
+printMenu(menuStack);
 process.stdin.on("keypress", function (ch, key) {
   if (key && key.ctrl && key.name === "c") {
     process.stdin.pause();
     return;
   }
-
-  const mode = menuStack[0];
-  const action = mode[ch];
+  if (ch === ".") {
+    menuStack.pop();
+    if (!menuStack[0]) {
+      menuStack = [top];
+    }
+    printMenu(menuStack);
+    return;
+  }
+  const mode = menuStack[menuStack.length - 1];
+  const action = mode.menu[ch];
   if (!action) {
     console.log(`Nothing bound to ${ch}`);
     return;
@@ -43,13 +54,12 @@ process.stdin.on("keypress", function (ch, key) {
     console.log(`🚀 ${action.command.join(" ")}`);
     childProcess.spawn(action.command[0], action.command.slice(1));
     // re-initialize
-    menuStack = [menu];
-    console.clear();
-    printMenu(menu);
+    menuStack = [top];
+    printMenu(menuStack);
     return;
   }
   if (action.menu) {
-    menuStack.unshift(action.menu);
-    printMenu(action.menu);
+    menuStack.push(action);
+    printMenu(menuStack);
   }
 });
