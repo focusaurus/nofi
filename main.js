@@ -2,11 +2,16 @@
 const path = require("node:path");
 const childProcess = require("node:child_process");
 const fs = require("node:fs");
+const kdl = require("kdljs");
 
 function loadConfig(menuPath) {
   try {
-    const menuJSON = fs.readFileSync(menuPath, "utf8");
-    return { label: "top", menu: JSON.parse(menuJSON) };
+    const menuKDL = fs.readFileSync(menuPath, "utf8");
+    const result = kdl.parse(menuKDL);
+    if (result.errors.length) {
+      throw new Error(result.errors.join("\n"));
+    }
+    return {name: "top", children: result.output};
   } catch (err) {
     console.error(err);
   }
@@ -27,12 +32,13 @@ function setupTTY() {
 
 function printMenu(stack) {
   console.clear();
-  stack.forEach((menu) => {
-    process.stdout.write(`${menu.label} >`);
-  });
+  // this is the breadcrumb that indicates full path from the root for
+  // orientation
+  console.log(stack.map((menu) => `${menu.name}` ).join(" > "));
   console.log();
-  Object.entries(stack[stack.length - 1].menu).forEach(([key, action]) => {
-    console.log(`${key}: ${action.label}`);
+  stack[stack.length - 1].children.forEach((item) => {
+    const icon = item.children.length ? "📂" : "🚀";
+    console.log(`${icon} ${item.properties.key}: ${item.name}`);
   });
   console.log("Exit: ctrl+c\t Reload: ctrl+r");
 }
@@ -44,6 +50,7 @@ function tagOut() {
 let menuPath = process.argv[2];
 let top = loadConfig(menuPath);
 let menuStack = [top];
+// console.log(menuStack);
 setupTTY();
 printMenu(menuStack);
 
@@ -58,7 +65,7 @@ function onKeypress(ch, key) {
     menuStack = [top];
     return;
   }
-  if (ch === "." || key.name === "escape") {
+  if (ch === "." || key && key.name === "escape") {
     menuStack.pop();
     if (!menuStack[0]) {
       menuStack = [top];
@@ -68,21 +75,21 @@ function onKeypress(ch, key) {
     return;
   }
   const mode = menuStack[menuStack.length - 1];
-  const action = mode.menu[ch];
+  const action = mode.children.filter((item) => item.properties.key === ch)[0];
   if (!action) {
     console.log(`Nothing bound to ${ch} (${key.name})`);
     return;
   }
-  if (action.command) {
-    console.log(`🚀 ${action.command.join(" ")}`);
-    childProcess.spawn(action.command[0], action.command.slice(1));
+  if (action.values.length) {
+    console.log(`🚀 ${action.values.join(" ")}`);
+    childProcess.spawn(action.values[0], action.values.slice(1));
     tagOut();
     // re-initialize
     menuStack = [top];
     printMenu(menuStack);
     return;
   }
-  if (action.menu) {
+  if (action.children.length) {
     menuStack.push(action);
     printMenu(menuStack);
   }
