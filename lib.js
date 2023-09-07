@@ -5,7 +5,11 @@ import fs from "node:fs";
 import kdl from "kdljs";
 import keypress from "keypress";
 
-function sortLower(a, b) {
+export const _test = {
+  sortLower,
+};
+
+export function sortLower(a, b) {
   const codes = [a.properties.key.charCodeAt(), b.properties.key.charCodeAt()];
   for (const [i, value] of codes.entries()) {
     if (value < 97) {
@@ -15,7 +19,7 @@ function sortLower(a, b) {
   return codes[0] - codes[1];
 }
 
-function loadConfig(menuPath) {
+export function loadConfig(menuPath) {
   try {
     const menuKDL = fs.readFileSync(menuPath, "utf8");
     const result = kdl.parse(menuKDL);
@@ -28,20 +32,22 @@ function loadConfig(menuPath) {
   }
 }
 
-function setupTTY() {
-  keypress(process.stdin);
+export function setupTTY(tty = process.stdin) {
+  keypress(tty);
   // without this, we would only get streams once enter is pressed
-  process.stdin.setRawMode(true);
+  tty.setRawMode(true);
 
   // resume stdin in the parent process (node app won't quit all by itself
   // unless an error or process.exit() happens)
-  process.stdin.resume();
+  tty.resume();
 
-  process.stdin.setEncoding("utf8");
-  process.stdin.on("keypress", onKeypress);
+  tty.setEncoding("utf8");
+  // tty.on("keypress", onKeypress);
 }
 
-function printMenu(stack) {
+export function view(model) {
+  const stack = model.menuStack;
+  const console = model.console;
   console.clear();
   // this is the breadcrumb that indicates full path from the root for
   // orientation
@@ -60,34 +66,26 @@ function tagOut() {
   childProcess.spawn("nofi-out");
 }
 
-let menuPath = process.argv[2];
-let top = loadConfig(menuPath);
-let menuStack = [top];
-// console.log(menuStack);
-setupTTY();
-printMenu(menuStack);
-
-function onKeypress(ch, key) {
+export function update(model, ch, key) {
   if (key && key.ctrl && key.name === "c") {
     process.stdin.pause();
     process.exit();
     return;
   }
   if (key && key.ctrl && key.name === "r") {
-    top = loadConfig(menuPath);
-    menuStack = [top];
-    return;
+    const top = loadConfig(menuPath);
+    return { ...model, menuStack: [top] };
   }
   if (ch === "." || (key && key.name === "escape")) {
-    menuStack.pop();
-    if (!menuStack[0]) {
-      menuStack = [top];
+    model.menuStack.pop();
+    if (!model.menuStack[0]) {
+      // TODO handle via signal?
       tagOut();
+      return { ...model, menuStack: [model.top] };
     }
-    printMenu(menuStack);
-    return;
+    return model;
   }
-  const mode = menuStack[menuStack.length - 1];
+  const mode = model.menuStack[model.menuStack.length - 1];
   const action = mode.children.filter((item) => item.properties.key === ch)[0];
   if (!action) {
     console.log(`Nothing bound to ${ch} (${key.name})`);
@@ -96,14 +94,12 @@ function onKeypress(ch, key) {
   if (action.values.length) {
     console.log(`🚀 ${action.values.join(" ")}`);
     childProcess.spawn(action.values[0], action.values.slice(1));
+    // TODO handle via signal?
     tagOut();
-    // re-initialize
-    menuStack = [top];
-    printMenu(menuStack);
-    return;
+    return { ...model, menuStack: [model.top] };
   }
   if (action.children.length) {
-    menuStack.push(action);
-    printMenu(menuStack);
+    model.menuStack.push(action);
   }
+  return model;
 }
