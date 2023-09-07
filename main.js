@@ -1,8 +1,19 @@
 #!/usr/bin/env node
-const path = require("node:path");
-const childProcess = require("node:child_process");
-const fs = require("node:fs");
-const kdl = require("kdljs");
+import path from "node:path";
+import childProcess from "node:child_process";
+import fs from "node:fs";
+import kdl from "kdljs";
+import keypress from "keypress";
+
+function sortLower(a, b) {
+  const codes = [a.properties.key.charCodeAt(), b.properties.key.charCodeAt()];
+  for (const [i, value] of codes.entries()) {
+    if (value < 97) {
+      codes[i] += 122;
+    }
+  }
+  return codes[0] - codes[1];
+}
 
 function loadConfig(menuPath) {
   try {
@@ -11,14 +22,14 @@ function loadConfig(menuPath) {
     if (result.errors.length) {
       throw new Error(result.errors.join("\n"));
     }
-    return {name: "top", children: result.output};
+    return { name: "top", children: result.output };
   } catch (err) {
     console.error(err);
   }
 }
 
 function setupTTY() {
-  require("keypress")(process.stdin);
+  keypress(process.stdin);
   // without this, we would only get streams once enter is pressed
   process.stdin.setRawMode(true);
 
@@ -34,9 +45,11 @@ function printMenu(stack) {
   console.clear();
   // this is the breadcrumb that indicates full path from the root for
   // orientation
-  console.log(stack.map((menu) => `${menu.name}` ).join(" > "));
+  console.log(stack.map((menu) => `${menu.name}`).join(" > "));
   console.log();
-  stack[stack.length - 1].children.forEach((item) => {
+  const items = [...stack[stack.length - 1].children];
+  items.sort(sortLower);
+  items.forEach((item) => {
     const icon = item.children.length ? "📂" : "🚀";
     console.log(`${icon} ${item.properties.key}: ${item.name}`);
   });
@@ -65,7 +78,7 @@ function onKeypress(ch, key) {
     menuStack = [top];
     return;
   }
-  if (ch === "." || key && key.name === "escape") {
+  if (ch === "." || (key && key.name === "escape")) {
     menuStack.pop();
     if (!menuStack[0]) {
       menuStack = [top];

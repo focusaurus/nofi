@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "TUI app launcher with modal leader keys",
   "main": "main.js",
+  "type": "module",
   "scripts": {
     "test": "tap *.tap.js"
   },
