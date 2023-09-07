@@ -19,14 +19,18 @@ export function sortLower(a, b) {
   return codes[0] - codes[1];
 }
 
+export function parseConfig(menuKDL) {
+  const result = kdl.parse(menuKDL);
+  if (result.errors.length) {
+    throw new Error(result.errors.join("\n"));
+  }
+  return { name: "top", children: result.output };
+}
+
 export function loadConfig(menuPath) {
   try {
     const menuKDL = fs.readFileSync(menuPath, "utf8");
-    const result = kdl.parse(menuKDL);
-    if (result.errors.length) {
-      throw new Error(result.errors.join("\n"));
-    }
-    return { name: "top", children: result.output };
+    return parseConfig(menuKDL);
   } catch (err) {
     console.error(err);
   }
