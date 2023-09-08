@@ -1,5 +1,5 @@
 import tap from "tap";
-import { _test } from "./lib.js";
+import { _test, view } from "./lib.js";
 
 function nodesWithKey(...keys) {
   return keys.map((k) => {
@@ -39,5 +39,32 @@ tap.test("parseConfig", (t) => {
     name: "top",
     children: [{ name: "xeyes", properties: { key: "x" }, values: ["xeyes"] }],
   });
+  t.end();
+});
+
+tap.test("view", (t) => {
+  const model = {
+    menuStack: [
+      {
+        name: "top",
+        children: [
+          { name: "one", properties: { key: "o" }, children: [] },
+          {
+            name: "two",
+            properties: { key: "t" },
+            children: [{ name: "t.a", children: [] }],
+          },
+        ],
+      },
+    ],
+  };
+  tap.same(
+    view(model),
+    `top
+
+🚀 o: one
+📂 t: two
+Exit: ctrl+c\t Reload: ctrl+r\tUp: . or escape`,
+  );
   t.end();
 });
