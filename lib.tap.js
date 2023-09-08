@@ -26,3 +26,18 @@ tap.test("sortLower", (t) => {
 
   t.end();
 });
+
+tap.test("parseConfig", (t) => {
+  try {
+    _test.parseConfig("nope}}}");
+    t.fail("should throw on invalid config syntax");
+  } catch (ex) {
+    t.ok(ex);
+  }
+  let top = _test.parseConfig(`xeyes key="x" "xeyes"`);
+  t.match(top, {
+    name: "top",
+    children: [{ name: "xeyes", properties: { key: "x" }, values: ["xeyes"] }],
+  });
+  t.end();
+});

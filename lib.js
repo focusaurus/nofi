@@ -1,12 +1,11 @@
 #!/usr/bin/env node
-import path from "node:path";
 import childProcess from "node:child_process";
 import fs from "node:fs";
 import kdl from "kdljs";
 import keypress from "keypress";
 
 export const _test = {
-  sortLower,
+  sortLower, parseConfig
 };
 
 export function sortLower(a, b) {
