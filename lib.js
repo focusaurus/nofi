@@ -1,5 +1,4 @@
 #!/usr/bin/env node
-import childProcess from "node:child_process";
 import fs from "node:fs";
 import kdl from "kdljs";
 import keypress from "keypress";
@@ -28,12 +27,8 @@ export function parseConfig(menuKDL) {
 }
 
 export function loadConfig(menuPath) {
-  try {
-    const menuKDL = fs.readFileSync(menuPath, "utf8");
-    return parseConfig(menuKDL);
-  } catch (err) {
-    console.error(err);
-  }
+  const menuKDL = fs.readFileSync(menuPath, "utf8");
+  return parseConfig(menuKDL);
 }
 
 export function setupTTY(tty = process.stdin) {
@@ -62,50 +57,49 @@ export function view(model) {
     const icon = item.children.length ? "📂" : "🚀";
     lines.push(`${icon} ${item.properties.key}: ${item.name}`);
   });
-  lines.push("Exit: ctrl+c\t Reload: ctrl+r");
+  lines.push("Exit: ctrl+c\t Reload: ctrl+r\tUp: . or escape");
   if (model.message) {
     lines.push(model.message);
   }
   return lines.join("\n");
 }
-
-function tagOut() {
-  childProcess.spawn("nofi-out");
-}
+const tagOut = { type: "spawn", args: ["nofi-out"] };
 
 export function update(model, ch, key) {
   if (key && key.ctrl && key.name === "c") {
-    process.stdin.pause();
-    process.exit();
-    return;
+    return [model, [{ type: "exit" }]];
   }
+
+  const actions = [];
   if (key && key.ctrl && key.name === "r") {
+    // TODO graceful error handling.
     const top = loadConfig(menuPath);
-    return { ...model, menuStack: [top] };
+    return [{ ...model, menuStack: [top] }, actions];
   }
   if (ch === "." || (key && key.name === "escape")) {
     model.menuStack.pop();
     if (!model.menuStack[0]) {
-      // TODO handle via signal?
-      tagOut();
-      return { ...model, menuStack: [model.top] };
+      return [{ ...model, menuStack: [model.top] }, [tagOut]];
     }
-    return model;
+    return [model, actions];
   }
   const mode = model.menuStack[model.menuStack.length - 1];
   const action = mode.children.filter((item) => item.properties.key === ch)[0];
   if (!action) {
-    return { ...model, message: `Nothing bound to ${ch} (${key.name})` };
+    return [
+      { ...model, message: `Nothing bound to ${ch} (${key.name})` },
+      actions,
+    ];
   }
   if (action.values.length) {
-    console.log(`🚀 ${action.values.join(" ")}`);
-    childProcess.spawn(action.values[0], action.values.slice(1));
-    // TODO handle via signal?
-    tagOut();
-    return { ...model, menuStack: [model.top] };
+    actions.push({ type: "message", message: `🚀 ${action.values.join(" ")}` });
+    actions.push({ type: "spawn", args: action.values });
+    // Tell window manager to hide the nofi window
+    actions.push(tagOut);
+    return [{ ...model, menuStack: [model.top] }, actions];
   }
   if (action.children.length) {
     model.menuStack.push(action);
   }
-  return model;
+  return [model, actions];
 }
