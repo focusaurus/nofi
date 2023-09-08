@@ -5,7 +5,8 @@ import kdl from "kdljs";
 import keypress from "keypress";
 
 export const _test = {
-  sortLower, parseConfig
+  sortLower,
+  parseConfig,
 };
 
 export function sortLower(a, b) {
@@ -50,19 +51,22 @@ export function setupTTY(tty = process.stdin) {
 
 export function view(model) {
   const stack = model.menuStack;
-  const console = model.console;
-  console.clear();
+  const lines = [];
   // this is the breadcrumb that indicates full path from the root for
   // orientation
-  console.log(stack.map((menu) => `${menu.name}`).join(" > "));
-  console.log();
+  lines.push(stack.map((menu) => `${menu.name}`).join(" > "));
+  lines.push("");
   const items = [...stack[stack.length - 1].children];
   items.sort(sortLower);
   items.forEach((item) => {
     const icon = item.children.length ? "📂" : "🚀";
-    console.log(`${icon} ${item.properties.key}: ${item.name}`);
+    lines.push(`${icon} ${item.properties.key}: ${item.name}`);
   });
-  console.log("Exit: ctrl+c\t Reload: ctrl+r");
+  lines.push("Exit: ctrl+c\t Reload: ctrl+r");
+  if (model.message) {
+    lines.push(model.message);
+  }
+  return lines.join("\n");
 }
 
 function tagOut() {
@@ -91,8 +95,7 @@ export function update(model, ch, key) {
   const mode = model.menuStack[model.menuStack.length - 1];
   const action = mode.children.filter((item) => item.properties.key === ch)[0];
   if (!action) {
-    console.log(`Nothing bound to ${ch} (${key.name})`);
-    return;
+    return { ...model, message: `Nothing bound to ${ch} (${key.name})` };
   }
   if (action.values.length) {
     console.log(`🚀 ${action.values.join(" ")}`);
