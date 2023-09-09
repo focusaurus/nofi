@@ -7,7 +7,7 @@ function nodesWithKey(...keys) {
   });
 }
 
-tap.test("sortLower", (t) => {
+tap.test("sortLower", (t: tap.Test) => {
   let input = [];
   input.sort(_test.sortLower);
   t.same(input, [], "empty");

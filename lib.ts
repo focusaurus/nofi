@@ -45,13 +45,16 @@ export const _test = {
   parseConfig,
 };
 
-export function sortLower(a: Item, b: Item) {
+export function sortLower(a: Item, b: Item): number {
   const codes = [a.key.charCodeAt(0), b.key.charCodeAt(0)];
-  for (const [i, value] of codes.entries()) {
-    if (value < 97) {
-      codes[i] += 122;
+  codes.forEach((value, i) => {
+    // console.log("@BUGBUG", value, i);
+    if (value >= 65 && value <= 90) {
+      // It's an uppercase letter, push it back to after lowercase
+      codes[i] = value + 122;
     }
-  }
+  });
+  // console.log("@BUGBUG", a, b, codes);
   return codes[0] - codes[1];
 }
 
@@ -60,8 +63,8 @@ type Node = Parameters<typeof kdljs.format>[0][number];
 function nodeToItem(node: Node, _index?: number, _array?: Node[]): Item {
   return {
     label: node.name,
-    run: node.values.map((v)=>String(v)),
-    key: node.properties && String(node.properties.key) ,
+    run: node.values.map((v) => String(v)),
+    key: node.properties && String(node.properties.key),
     items: node.children.map(nodeToItem),
   };
 }
@@ -124,7 +127,7 @@ const tagOut: Action = { type: "run", args: ["nofi-out"] };
 export function update(
   model: Model,
   ch: string,
-  key: Keypress,
+  key?: Keypress,
 ): [Model, Action[]] {
   if (key && key.ctrl && key.name === "c") {
     return [model, [{ type: "exit" }]];

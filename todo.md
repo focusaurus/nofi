@@ -1,3 +1,4 @@
 - [x] map KDL node to simpler custom type
 - [ ] javascript to typescript
 - [ ] node to bun
+- [ ] split types for Menu & Action
