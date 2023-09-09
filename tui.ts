@@ -1,23 +1,31 @@
 #!/usr/bin/env node
-import childProcess from "node:child_process";
-import { setupTTY, loadConfig, update, view } from "./lib.js";
+import childProcess from "child_process";
+import {
+  setupTTY,
+  loadConfig,
+  update,
+  view,
+  Item,
+  Action,
+  Model,
+} from "./lib.js";
 
 let menuPath = process.argv[2];
-let top;
+let top: Item;
 try {
   top = loadConfig(menuPath);
 } catch (error) {
   console.error(error);
   process.exit(10);
 }
-let model = { menuStack: [top], console, top };
+let model: Model = { menuStack: [top], console, top, menuPath };
 
 function onKeypress(ch, key) {
-  let actions;
+  let actions: Action[];
   [model, actions] = update(model, ch, key);
   actions.forEach((action) => {
     switch (action.type) {
-      case "spawn":
+      case "run":
         childProcess.spawn(action.args[0], action.args.slice(1));
         break;
       case "message":
