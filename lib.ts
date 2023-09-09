@@ -1,34 +1,42 @@
-import fs from "fs";
-import kdl from "kdljs";
-import readline from "readline";
+import * as fs from "fs";
+import * as kdl from "kdljs";
+import * as readline from "readline";
 
-export type Node = {
-  name: string;
-  properties: { key: string };
-  values: string[];
-  children: Node[];
-};
-
-export type Item = {
+export interface Item {
   label: string;
   run: string[];
   key: string;
   items: Item[];
-};
+}
 
-export type Model = {
+export interface Model {
   top: Item;
   console: Console;
   menuPath: string;
   menuStack: Item[];
   message: string;
-};
+}
 
-export type Action = {
-  type: "message" | "run" | "exit";
-  args?: string[];
-  message?: string;
-};
+export interface ActionRun {
+  type: "run";
+  args: string[];
+}
+
+export interface ActionMessage {
+  type: "message";
+  message: string;
+}
+
+export interface ActionExit {
+  type: "exit";
+}
+
+export type Action = ActionExit | ActionRun | ActionMessage;
+
+export interface Keypress {
+  name: string;
+  ctrl: boolean;
+}
 
 export const _test = {
   sortLower,
@@ -45,7 +53,11 @@ export function sortLower(a: Item, b: Item) {
   return codes[0] - codes[1];
 }
 
-function nodeToItem(node: Node): Item {
+function nodeToItem(
+  node: kdl.Node,
+  _index?: number,
+  _array?: kdl.Node[],
+): Item {
   return {
     label: node.name,
     run: node.values,
@@ -59,7 +71,15 @@ export function parseConfig(menuKDL: string): Item {
   if (result.errors.length) {
     throw new Error(result.errors.join("\n"));
   }
-  return { label: "top", items: result.output.map(nodeToItem) };
+  if (!result.output) {
+    throw new Error("menu KDL invalid. No output found. (@nofi:400)");
+  }
+  return {
+    label: "top",
+    items: result.output.map(nodeToItem),
+    run: [],
+    key: "",
+  };
 }
 
 export function loadConfig(menuPath: string) {
@@ -81,7 +101,7 @@ export function setupTTY(tty = process.stdin) {
   // tty.on("keypress", onKeypress);
 }
 
-export function view(model: Model) {
+export function view(model: Model): string {
   const stack = model.menuStack;
   const lines: string[] = [];
   // this is the breadcrumb that indicates full path from the root for
@@ -102,7 +122,11 @@ export function view(model: Model) {
 }
 const tagOut: Action = { type: "run", args: ["nofi-out"] };
 
-export function update(model: Model, ch: string, key) {
+export function update(
+  model: Model,
+  ch: string,
+  key: Keypress,
+): [Model, Action[]] {
   if (key && key.ctrl && key.name === "c") {
     return [model, [{ type: "exit" }]];
   }

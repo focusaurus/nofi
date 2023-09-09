@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import childProcess from "child_process";
+import * as childProcess from "child_process";
 import {
   setupTTY,
   loadConfig,
@@ -8,6 +8,7 @@ import {
   Item,
   Action,
   Model,
+  Keypress,
 } from "./lib.js";
 
 let menuPath = process.argv[2];
@@ -18,9 +19,9 @@ try {
   console.error(error);
   process.exit(10);
 }
-let model: Model = { menuStack: [top], console, top, menuPath };
+let model: Model = { menuStack: [top], console, top, menuPath, message: "" };
 
-function onKeypress(ch, key) {
+function onKeypress(ch: string, key: Keypress) {
   let actions: Action[];
   [model, actions] = update(model, ch, key);
   actions.forEach((action) => {
