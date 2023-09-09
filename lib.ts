@@ -4,18 +4,23 @@ import * as kdljs from "kdljs";
 
 import * as readline from "readline";
 
+export interface Menu {
+  label: string;
+  key: string;
+  items: Array<Item | Menu>;
+}
+
 export interface Item {
   label: string;
   run: string[];
   key: string;
-  items: Item[];
 }
 
 export interface Model {
-  top: Item;
+  top: Menu;
   console: Console;
   menuPath: string;
-  menuStack: Item[];
+  menuStack: Menu[];
   message: string;
 }
 
@@ -45,22 +50,20 @@ export const _test = {
   parseConfig,
 };
 
-export function sortLower(a: Item, b: Item): number {
+export function sortLower(a: Item | Menu, b: Item | Menu): number {
   const codes = [a.key.charCodeAt(0), b.key.charCodeAt(0)];
   codes.forEach((value, i) => {
-    // console.log("@BUGBUG", value, i);
     if (value >= 65 && value <= 90) {
       // It's an uppercase letter, push it back to after lowercase
       codes[i] = value + 122;
     }
   });
-  // console.log("@BUGBUG", a, b, codes);
   return codes[0] - codes[1];
 }
 
 type Node = Parameters<typeof kdljs.format>[0][number];
 
-function nodeToItem(node: Node, _index?: number, _array?: Node[]): Item {
+function nodeToItem(node: Node, _index?: number, _array?: Node[]): Item | Menu {
   return {
     label: node.name,
     run: node.values.map((v) => String(v)),
@@ -69,7 +72,7 @@ function nodeToItem(node: Node, _index?: number, _array?: Node[]): Item {
   };
 }
 
-export function parseConfig(menuKDL: string): Item {
+export function parseConfig(menuKDL: string): Menu {
   const result = kdljs.parse(menuKDL);
   if (result.errors.length) {
     throw new Error(result.errors.join("\n"));
@@ -80,7 +83,6 @@ export function parseConfig(menuKDL: string): Item {
   return {
     label: "top",
     items: result.output.map(nodeToItem),
-    run: [],
     key: "",
   };
 }
@@ -113,7 +115,7 @@ export function view(model: Model): string {
   const items = [...stack[stack.length - 1].items];
   items.sort(sortLower);
   items.forEach((item) => {
-    const icon = item.items.length ? "📂" : "🚀";
+    const icon = isItem(item) ? "🚀" : "📂";
     lines.push(`${icon} ${item.key}: ${item.label}`);
   });
   lines.push("Exit: ctrl+c\t Reload: ctrl+r\tUp: . or escape");
@@ -123,6 +125,10 @@ export function view(model: Model): string {
   return lines.join("\n");
 }
 const tagOut: Action = { type: "run", args: ["nofi-out"] };
+
+function isItem(choice: Menu | Item): choice is Item {
+  return (choice as Item).run.length > 0;
+}
 
 export function update(
   model: Model,
@@ -150,18 +156,17 @@ export function update(
   const choice = mode.items.filter((item) => item.key === ch)[0];
   if (!choice) {
     return [
-      { ...model, message: `Nothing bound to ${ch} (${key.name})` },
+      { ...model, message: `Nothing bound to ${ch} (${key && key.name})` },
       actions,
     ];
   }
-  if (choice.run.length) {
+  if (isItem(choice)) {
     actions.push({ type: "message", message: `🚀 ${choice.run.join(" ")}` });
     actions.push({ type: "run", args: choice.run });
     // Tell window manager to hide the nofi window
     actions.push(tagOut);
     return [{ ...model, menuStack: [model.top] }, actions];
-  }
-  if (choice.items.length) {
+  } else {
     model.menuStack.push(choice);
   }
   return [model, actions];

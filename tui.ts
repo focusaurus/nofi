@@ -8,7 +8,6 @@ import {
   loadConfig,
   update,
   view,
-  Item,
   Action,
   Model,
   Keypress,
@@ -19,7 +18,7 @@ if (!menuPath) {
   menuPath = path.join(os.homedir(), ".config", "nofi", "menu.kdl");
 }
 
-let top: Item;
+let top;
 try {
   top = loadConfig(menuPath);
 } catch (error) {

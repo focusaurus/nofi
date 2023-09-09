@@ -26,7 +26,6 @@ test("parseConfig", () => {
   expect(_test.parseConfig(`xeyes key="x" "xeyes"`)).toEqual({
     label: "top",
     key: "",
-    run: [],
     items: [{ label: "xeyes", key: "x", run: ["xeyes"], items: [] }],
   });
 });
@@ -34,7 +33,6 @@ test("parseConfig", () => {
 test("view", () => {
   const top = {
     label: "top",
-    run: [],
     key: "",
     items: [
       { label: "one", key: "o", items: [], run: [] },
@@ -63,15 +61,13 @@ Exit: ctrl+c\t Reload: ctrl+r\tUp: . or escape`);
 test("update", () => {
   const top = {
     label: "top",
-    run: [],
     key: "",
     items: [
-      { label: "one", key: "o", items: [], run: [] },
+      { label: "one", key: "o", run: [] },
       {
         label: "two",
         key: "t",
-        run: [],
-        items: [{ run: [], key: "a", label: "t.a", items: [] }],
+        items: [{ run: [], key: "a", label: "t.a" }],
       },
     ],
   };
