@@ -3,7 +3,7 @@ import { _test, view, update } from "./lib.js";
 
 function nodesWithKey(...keys) {
   return keys.map((k) => {
-    return { properties: { key: k } };
+    return { key: k };
   });
 }
 
@@ -36,8 +36,8 @@ tap.test("parseConfig", (t) => {
   }
   let top = _test.parseConfig(`xeyes key="x" "xeyes"`);
   t.match(top, {
-    name: "top",
-    children: [{ name: "xeyes", properties: { key: "x" }, values: ["xeyes"] }],
+    label: "top",
+    items: [{ label: "xeyes", key: "x", run: ["xeyes"] }],
   });
   t.end();
 });
@@ -46,13 +46,13 @@ tap.test("view", (t) => {
   const model = {
     menuStack: [
       {
-        name: "top",
-        children: [
-          { name: "one", properties: { key: "o" }, children: [] },
+        label: "top",
+        items: [
+          { label: "one", key: "o", items: [] },
           {
-            name: "two",
-            properties: { key: "t" },
-            children: [{ name: "t.a", children: [] }],
+            label: "two",
+            key: "t",
+            items: [{ label: "t.a", items: [] }],
           },
         ],
       },
@@ -71,19 +71,19 @@ Exit: ctrl+c\t Reload: ctrl+r\tUp: . or escape`,
 
 tap.test("update", (t) => {
   const top = {
-    name: "top",
-    children: [
-      { name: "one", properties: { key: "o" }, children: [], values: [] },
+    label: "top",
+    items: [
+      { label: "one", key: "o", items: [], run: [] },
       {
-        name: "two",
-        properties: { key: "t" },
-        children: [{ name: "t.a", children: [] }],
-        values: [],
+        label: "two",
+        key: "t",
+        items: [{ label: "t.a", items: [] }],
+        run: [],
       },
     ],
   };
   const model = { menuStack: [top] };
-  const expect = { menuStack: [top, top.children[1]] };
+  const expect = { menuStack: [top, top.items[1]] };
   const [model2, actions] = update(model, "t");
   tap.same(model2, expect);
   tap.equal(actions.length, 0);
