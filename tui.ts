@@ -1,5 +1,8 @@
 #!/usr/bin/env node
 import * as childProcess from "child_process";
+import * as os from "os";
+import * as path from "path";
+
 import {
   setupTTY,
   loadConfig,
@@ -12,6 +15,10 @@ import {
 } from "./lib.js";
 
 let menuPath = process.argv[2];
+if (!menuPath) {
+  menuPath = path.join(os.homedir(), ".config", "nofi", "menu.kdl");
+}
+
 let top: Item;
 try {
   top = loadConfig(menuPath);
