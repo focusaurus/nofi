@@ -1,15 +1,34 @@
 #!/usr/bin/env node
 import fs from "node:fs";
 import kdl from "kdljs";
-import keypress from "keypress";
+import readline from "node:readline";
+
+type Node = {
+  name: string;
+  properties: { key: string };
+  values: string[];
+  children: Node[];
+};
+
+type Item = {
+  label: string;
+  run: string[];
+  key: string;
+  items: Item[];
+};
+
+type Model = {
+  menuStack: Item[];
+  message: string;
+};
 
 export const _test = {
   sortLower,
   parseConfig,
 };
 
-export function sortLower(a, b) {
-  const codes = [a.key.charCodeAt(), b.key.charCodeAt()];
+export function sortLower(a: Item, b: Item) {
+  const codes = [a.key.charCodeAt(0), b.key.charCodeAt(0)];
   for (const [i, value] of codes.entries()) {
     if (value < 97) {
       codes[i] += 122;
@@ -18,7 +37,7 @@ export function sortLower(a, b) {
   return codes[0] - codes[1];
 }
 
-function nodeToItem(node) {
+function nodeToItem(node: Node): Item {
   return {
     label: node.name,
     run: node.values,
@@ -27,7 +46,7 @@ function nodeToItem(node) {
   };
 }
 
-export function parseConfig(menuKDL) {
+export function parseConfig(menuKDL): Item {
   const result = kdl.parse(menuKDL);
   if (result.errors.length) {
     throw new Error(result.errors.join("\n"));
@@ -41,19 +60,20 @@ export function loadConfig(menuPath) {
 }
 
 export function setupTTY(tty = process.stdin) {
-  keypress(tty);
+  readline.emitKeypressEvents(tty);
+
   // without this, we would only get streams once enter is pressed
   tty.setRawMode(true);
 
   // resume stdin in the parent process (node app won't quit all by itself
   // unless an error or process.exit() happens)
-  tty.resume();
+  // tty.resume();
 
   tty.setEncoding("utf8");
   // tty.on("keypress", onKeypress);
 }
 
-export function view(model) {
+export function view(model: Model) {
   const stack = model.menuStack;
   const lines = [];
   // this is the breadcrumb that indicates full path from the root for
@@ -74,7 +94,7 @@ export function view(model) {
 }
 const tagOut = { type: "spawn", args: ["nofi-out"] };
 
-export function update(model, ch, key) {
+export function update(model: Model, ch: string, key: Keypress.Keypress) {
   if (key && key.ctrl && key.name === "c") {
     return [model, [{ type: "exit" }]];
   }

@@ -18,8 +18,7 @@
   },
   "homepage": "https://github.com/focusaurus/nofi#readme",
   "dependencies": {
-    "kdljs": "0.1.5",
-    "keypress": "0.2.1"
+    "kdljs": "0.1.5"
   },
   "devDependencies": {
     "tap": "16.3.8"
