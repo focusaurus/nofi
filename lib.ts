@@ -1,5 +1,7 @@
 import * as fs from "fs";
-import * as kdl from "kdljs";
+/// <reference path="node_modules/kdlks/index.d.ts" />
+import * as kdljs from "kdljs";
+
 import * as readline from "readline";
 
 export interface Item {
@@ -53,21 +55,19 @@ export function sortLower(a: Item, b: Item) {
   return codes[0] - codes[1];
 }
 
-function nodeToItem(
-  node: kdl.Node,
-  _index?: number,
-  _array?: kdl.Node[],
-): Item {
+type Node = Parameters<typeof kdljs.format>[0][number];
+
+function nodeToItem(node: Node, _index?: number, _array?: Node[]): Item {
   return {
     label: node.name,
-    run: node.values,
-    key: node.properties.key,
+    run: node.values.map((v)=>String(v)),
+    key: node.properties && String(node.properties.key) ,
     items: node.children.map(nodeToItem),
   };
 }
 
 export function parseConfig(menuKDL: string): Item {
-  const result = kdl.parse(menuKDL);
+  const result = kdljs.parse(menuKDL);
   if (result.errors.length) {
     throw new Error(result.errors.join("\n"));
   }
@@ -98,7 +98,6 @@ export function setupTTY(tty = process.stdin) {
   // tty.resume();
 
   tty.setEncoding("utf8");
-  // tty.on("keypress", onKeypress);
 }
 
 export function view(model: Model): string {
