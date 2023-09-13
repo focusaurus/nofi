@@ -1,11 +1,15 @@
 {
   "compilerOptions": {
-    "module": "nodenext",
-    "moduleResolution": "nodenext",
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
     "noEmit": true,
+    "types": ["bun-types"],
+    "lib": ["esnext"],
     "strict": true,
     "strictNullChecks": true,
-    "target": "es2015"
+    "target": "esnext"
   },
   "extends": [
     "@tsconfig/node20/tsconfig.json"
