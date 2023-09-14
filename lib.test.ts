@@ -35,12 +35,11 @@ test("view", () => {
     label: "top",
     key: "",
     items: [
-      { label: "one", key: "o", items: [], run: [] },
+      { label: "one", key: "o", run: [] },
       {
         label: "two",
         key: "t",
-        run: [],
-        items: [{ run: [], key: "a", label: "t.a", items: [] }],
+        items: [{ run: [], key: "a", label: "t.a" }],
       },
     ],
   };

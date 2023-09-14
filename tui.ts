@@ -33,7 +33,7 @@ function onKeypress(ch: string, key: Keypress) {
   actions.forEach((action) => {
     switch (action.type) {
       case "run":
-        childProcess.spawn(action.args[0], action.args.slice(1));
+        childProcess.spawn(action.args[0] || "true", action.args.slice(1));
         break;
       case "message":
         console.log(action.message);

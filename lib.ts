@@ -58,7 +58,7 @@ export function sortLower(a: Item | Menu, b: Item | Menu): number {
       codes[i] = value + 122;
     }
   });
-  return codes[0] - codes[1];
+  return (codes[0] || 0) - (codes[1] || 0);
 }
 
 type Node = Parameters<typeof kdljs.format>[0][number];
@@ -112,7 +112,11 @@ export function view(model: Model): string {
   // orientation
   lines.push(stack.map((menu) => `${menu.label}`).join(" > "));
   lines.push("");
-  const items = [...stack[stack.length - 1].items];
+  let currentMenu = stack[stack.length - 1];
+  if (!currentMenu) {
+    throw new Error("menu stack unexpectedly empty");
+  }
+  const items = [...currentMenu.items];
   items.sort(sortLower);
   items.forEach((item) => {
     const icon = isItem(item) ? "🚀" : "📂";
@@ -127,7 +131,7 @@ export function view(model: Model): string {
 const tagOut: Action = { type: "run", args: ["nofi-out"] };
 
 function isItem(choice: Menu | Item): choice is Item {
-  return (choice as Item).run.length > 0;
+  return Array.isArray((choice as Item).run);
 }
 
 export function update(
@@ -153,6 +157,9 @@ export function update(
     return [model, actions];
   }
   const mode = model.menuStack[model.menuStack.length - 1];
+  if (!mode) {
+    throw new Error("menu stack is unexpectedly empty in update()");
+  }
   const choice = mode.items.filter((item) => item.key === ch)[0];
   if (!choice) {
     return [
