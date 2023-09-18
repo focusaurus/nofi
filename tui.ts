@@ -22,7 +22,7 @@ let top;
 try {
   top = loadConfig(menuPath);
 } catch (error) {
-  console.error(error);
+  console.error(error.message);
   process.exit(10);
 }
 let model: Model = { menuStack: [top], console, top, menuPath, message: "" };
@@ -44,7 +44,7 @@ function onKeypress(ch: string, key: Keypress) {
     }
   });
   const ui = view(model);
-  console.clear();
+  // console.clear();
   console.log(ui);
 }
 setupTTY(process.stdin);

@@ -26,7 +26,7 @@ test("parseConfig", () => {
   expect(_test.parseConfig(`xeyes key="x" "xeyes"`)).toEqual({
     label: "top",
     key: "",
-    items: [{ label: "xeyes", key: "x", run: ["xeyes"], items: [] }],
+    items: [{ label: "xeyes", key: "x", run: ["xeyes"] }],
   });
 });
 

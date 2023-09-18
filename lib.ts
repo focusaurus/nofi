@@ -1,8 +1,7 @@
 import * as fs from "fs";
-/// <reference path="node_modules/kdlks/index.d.ts" />
-import * as kdljs from "kdljs";
-
 import * as readline from "readline";
+import * as util from "util";
+import * as kdljs from "kdljs";
 
 export interface Menu {
   label: string;
@@ -64,12 +63,15 @@ export function sortLower(a: Item | Menu, b: Item | Menu): number {
 type Node = Parameters<typeof kdljs.format>[0][number];
 
 function nodeToItem(node: Node, _index?: number, _array?: Node[]): Item | Menu {
-  return {
+  const base = {
     label: node.name,
-    run: node.values.map((v) => String(v)),
     key: node.properties && String(node.properties.key),
-    items: node.children.map(nodeToItem),
   };
+  if (node.children.length) {
+    return { ...base, items: node.children.map(nodeToItem) };
+  } else {
+    return { ...base, run: node.values.map((v) => String(v)) };
+  }
 }
 
 export function parseConfig(menuKDL: string): Menu {
@@ -88,7 +90,15 @@ export function parseConfig(menuKDL: string): Menu {
 }
 
 export function loadConfig(menuPath: string) {
-  const menuKDL = fs.readFileSync(menuPath, "utf8");
+  let menuKDL: string = "";
+  try {
+    menuKDL = fs.readFileSync(menuPath, "utf8");
+  } catch (err: any) {
+    // ENOENT
+    if (err && err.errno === -2) {
+      throw new Error(`nofi config file not found at path "${menuPath}"`);
+    }
+  }
   return parseConfig(menuKDL);
 }
 
