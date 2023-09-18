@@ -44,7 +44,7 @@ function onKeypress(ch: string, key: Keypress) {
     }
   });
   const ui = view(model);
-  // console.clear();
+  console.clear();
   console.log(ui);
 }
 setupTTY(process.stdin);
