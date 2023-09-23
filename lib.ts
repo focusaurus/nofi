@@ -1,6 +1,5 @@
 import * as fs from "fs";
 import * as readline from "readline";
-import * as util from "util";
 import * as kdljs from "kdljs";
 
 export interface Menu {
@@ -20,7 +19,7 @@ export interface Model {
   console: Console;
   menuPath: string;
   menuStack: Menu[];
-  message: string;
+  messages: string[];
 }
 
 export interface ActionRun {
@@ -28,16 +27,11 @@ export interface ActionRun {
   args: string[];
 }
 
-export interface ActionMessage {
-  type: "message";
-  message: string;
-}
-
 export interface ActionExit {
   type: "exit";
 }
 
-export type Action = ActionExit | ActionRun | ActionMessage;
+export type Action = ActionExit | ActionRun;
 
 export interface Keypress {
   name: string;
@@ -122,6 +116,7 @@ export function view(model: Model): string {
   // orientation
   lines.push(stack.map((menu) => `${menu.label}`).join(" > "));
   lines.push("");
+  model.messages.forEach((message) => lines.push(message));
   let currentMenu = stack[stack.length - 1];
   if (!currentMenu) {
     throw new Error("menu stack unexpectedly empty");
@@ -133,9 +128,6 @@ export function view(model: Model): string {
     lines.push(`${icon} ${item.key}: ${item.label}`);
   });
   lines.push("Exit: ctrl+c\t Reload: ctrl+r\tUp: . or escape");
-  if (model.message) {
-    lines.push(model.message);
-  }
   return lines.join("\n");
 }
 const tagOut: Action = { type: "run", args: ["nofi-out"] };
@@ -173,16 +165,15 @@ export function update(
   const choice = mode.items.filter((item) => item.key === ch)[0];
   if (!choice) {
     return [
-      { ...model, message: `Nothing bound to ${ch} (${key && key.name})` },
+      { ...model, messages: [`Nothing bound to ${ch} (${key && key.name})`] },
       actions,
     ];
   }
   if (isItem(choice)) {
-    actions.push({ type: "message", message: `🚀 ${choice.run.join(" ")}` });
     actions.push({ type: "run", args: choice.run });
     // Tell window manager to hide the nofi window
     actions.push(tagOut);
-    return [{ ...model, menuStack: [model.top] }, actions];
+    return [{ ...model, menuStack: [model.top], messages: [`🚀 ${choice.run.join(" ")}`] }, actions];
   } else {
     model.menuStack.push(choice);
   }

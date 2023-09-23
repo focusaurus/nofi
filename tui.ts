@@ -9,6 +9,7 @@ import {
   update,
   view,
   Action,
+  ActionRun,
   Model,
   Keypress,
 } from "./lib.js";
@@ -22,30 +23,67 @@ let top;
 try {
   top = loadConfig(menuPath);
 } catch (error) {
-  console.error(error.message);
+  if (error instanceof Error) {
+    console.error(error.message);
+  }
   process.exit(10);
 }
-let model: Model = { menuStack: [top], console, top, menuPath, message: "" };
+let model: Model = { menuStack: [top], console, top, menuPath, messages: [] };
 
+function runAction(model: Model, action: ActionRun) {
+  const command = action.args[0];
+  if (!command) {
+    return;
+  }
+  let sub;
+  try {
+    sub = childProcess.spawn(command, action.args.slice(1), { detached: true });
+  } catch (error) {
+    if (error instanceof Error) {
+      model.messages.push(`error running ${command}: ${error.message}`);
+      review();
+    }
+    return;
+  }
+  sub.stderr.on("data", (data) => {
+    model.messages.push(`${command} stderr: ${data}`);
+    review();
+  });
+  sub.on("close", (exitCode: number) => {
+    if (exitCode !== 0) {
+      model.messages.push(`Subprocess ${command} exited code ${exitCode}`);
+      review();
+    }
+  });
+  sub.on("error", (error: Error) => {
+    model.messages.push(`Subprocess ${command} error: ${error}`);
+    review();
+  });
+}
+
+function review() {
+  const ui = view(model);
+  console.clear();
+  console.log(ui);
+}
 function onKeypress(ch: string, key: Keypress) {
   let actions: Action[];
   [model, actions] = update(model, ch, key);
   actions.forEach((action) => {
     switch (action.type) {
       case "run":
-        childProcess.spawn(action.args[0] || "true", action.args.slice(1));
+        runAction(model, action);
+        // childProcess.spawn(action.args[0] || "true", action.args.slice(1));
         break;
-      case "message":
-        console.log(action.message);
-        break;
+      // case "message":
+      //   console.log(action.message);
+      //   break;
       case "exit":
         process.stdin.pause();
         process.exit();
     }
   });
-  const ui = view(model);
-  console.clear();
-  console.log(ui);
+  review();
 }
 setupTTY(process.stdin);
 process.stdin.on("keypress", onKeypress);

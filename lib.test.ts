@@ -47,7 +47,7 @@ test("view", () => {
     top,
     menuPath: "",
     console,
-    message: "",
+    messages: [],
     menuStack: [top],
   };
   expect(view(model)).toEqual(`top
@@ -74,14 +74,14 @@ test("update", () => {
     top,
     menuPath: "",
     console,
-    message: "",
+    messages: [],
     menuStack: [top],
   };
   const want = {
     menuStack: [top, top.items[1]],
     top,
     console,
-    message: "",
+    messages: [],
     menuPath: "",
   };
   expect(update(model, "t")).toEqual([want, []]);
