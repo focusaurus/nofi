@@ -147,9 +147,18 @@ export function update(
 
   const actions: Action[] = [];
   if (key && key.ctrl && key.name === "r") {
-    // TODO graceful error handling.
-    const top = loadConfig(model.menuPath);
-    return [{ ...model, menuStack: [top] }, actions];
+    let top;
+    const messages = [];
+    try {
+      top = loadConfig(model.menuPath);
+    } catch (error) {
+      if (error instanceof Error) {
+        messages.push(
+          `error reloading config at ${model.menuPath}: ${error.message}`,
+        );
+      }
+    }
+    return [{ ...model, menuStack: [top || model.top], messages }, actions];
   }
   if (ch === "." || (key && key.name === "escape")) {
     model.menuStack.pop();
@@ -173,7 +182,14 @@ export function update(
     actions.push({ type: "run", args: choice.run });
     // Tell window manager to hide the nofi window
     actions.push(tagOut);
-    return [{ ...model, menuStack: [model.top], messages: [`🚀 ${choice.run.join(" ")}`] }, actions];
+    return [
+      {
+        ...model,
+        menuStack: [model.top],
+        messages: [`🚀 ${choice.run.join(" ")}`],
+      },
+      actions,
+    ];
   } else {
     model.menuStack.push(choice);
   }
