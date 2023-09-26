@@ -1,18 +1,20 @@
 import * as fs from "fs";
 import * as readline from "readline";
 import * as kdljs from "kdljs";
+import type kdl from "kdljs";
 
-export interface Menu {
+export interface Choice {
   label: string;
   key: string;
+}
+
+export type Menu = Choice & {
   items: Array<Item | Menu>;
-}
+};
 
-export interface Item {
-  label: string;
+export type Item = Choice & {
   run: string[];
-  key: string;
-}
+};
 
 export interface Model {
   top: Menu;
@@ -54,9 +56,11 @@ export function sortLower(a: Item | Menu, b: Item | Menu): number {
   return (codes[0] || 0) - (codes[1] || 0);
 }
 
-type Node = Parameters<typeof kdljs.format>[0][number];
-
-function nodeToItem(node: Node, _index?: number, _array?: Node[]): Item | Menu {
+function nodeToItem(
+  node: kdl.Node,
+  _index?: number,
+  _array?: kdl.Node[],
+): Item | Menu {
   const base = {
     label: node.name,
     key: node.properties && String(node.properties.key),
@@ -64,7 +68,7 @@ function nodeToItem(node: Node, _index?: number, _array?: Node[]): Item | Menu {
   if (node.children.length) {
     return { ...base, items: node.children.map(nodeToItem) };
   } else {
-    return { ...base, run: node.values.map((v) => String(v)) };
+    return { ...base, run: node.values.map((v: any) => String(v)) };
   }
 }
 
