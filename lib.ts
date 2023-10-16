@@ -4,40 +4,40 @@ import * as kdljs from "kdljs";
 import type kdl from "kdljs";
 
 export interface Choice {
-  label: string;
-  key: string;
+  readonly label: string;
+  readonly key: string;
 }
 
 export type Menu = Choice & {
-  items: Array<Item | Menu>;
+  readonly items: ReadonlyArray<Item | Menu>;
 };
 
 export type Item = Choice & {
-  run: string[];
+  readonly run: readonly string[];
 };
 
 export interface Model {
-  top: Menu;
-  console: Console;
-  menuPath: string;
+  readonly top: Menu;
+  readonly console: Console;
+  readonly menuPath: string;
   menuStack: Menu[];
   messages: string[];
 }
 
 export interface ActionRun {
-  type: "run";
-  args: string[];
+  readonly type: "run";
+  readonly args: readonly string[];
 }
 
 export interface ActionExit {
-  type: "exit";
+  readonly type: "exit";
 }
 
 export type Action = ActionExit | ActionRun;
 
 export interface Keypress {
-  name: string;
-  ctrl: boolean;
+  readonly name: string;
+  readonly ctrl: boolean;
 }
 
 export const _test = {
@@ -87,7 +87,7 @@ export function parseConfig(menuKDL: string): Menu {
   };
 }
 
-export function loadConfig(menuPath: string) {
+export function loadConfig(menuPath: string): Menu {
   let menuKDL: string = "";
   try {
     menuKDL = fs.readFileSync(menuPath, "utf8");
@@ -100,7 +100,7 @@ export function loadConfig(menuPath: string) {
   return parseConfig(menuKDL);
 }
 
-export function setupTTY(tty = process.stdin) {
+export function setupTTY(tty = process.stdin): void {
   readline.emitKeypressEvents(tty);
 
   // without this, we would only get streams once enter is pressed

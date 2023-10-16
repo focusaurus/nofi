@@ -30,7 +30,7 @@ try {
 }
 let model: Model = { menuStack: [top], console, top, menuPath, messages: [] };
 
-function runAction(model: Model, action: ActionRun) {
+function runAction(model: Model, action: ActionRun): void {
   const command = action.args[0];
   if (!command) {
     return;
@@ -61,12 +61,13 @@ function runAction(model: Model, action: ActionRun) {
   });
 }
 
-function review() {
+function review(): void {
   const ui = view(model);
   console.clear();
   console.log(ui);
 }
-function onKeypress(ch: string, key: Keypress) {
+
+function onKeypress(ch: string, key: Keypress): void {
   let actions: Action[];
   [model, actions] = update(model, ch, key);
   actions.forEach((action) => {
